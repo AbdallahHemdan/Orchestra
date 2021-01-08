@@ -75,3 +75,15 @@ def run_experiment(feature_set):
         accuracy = model.score(test_features, test_labels)
         
         print(model_name, 'accuracy:', accuracy*100, '%')
+
+
+random_seed = 42  
+random.seed(random_seed)
+target_img_size = (32, 32)
+np.random.seed(random_seed)
+
+classifiers = {
+    'SVM': svm.LinearSVC(random_state=random_seed),
+    'KNN': KNeighborsClassifier(n_neighbors=7),
+    'NN': MLPClassifier(solver='sgd', random_state=random_seed, hidden_layer_sizes=(500,), max_iter=20, verbose=1)
+}
