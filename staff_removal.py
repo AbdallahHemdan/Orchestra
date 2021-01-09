@@ -38,26 +38,25 @@ def get_staff_lines(width, height, in_img, threshold):
     # cur_thinkneed: current thickness of line which may extended #  
     cur_thickness = 1
     
-    while it < len(initial_lines) - 1:
+    while it < len(initial_lines):
         # Save starting row of staff line #
         if cur_thickness == 1:
             staff_lines.append(initial_lines[it])
 
-        # Try to extend line thicknees #
+        if it == int(len(initial_lines) - 1):
+            staff_lines_thicknesses.append(cur_thickness)
+
+        # Try to extend line thickness #
         # If Failed: 1.save current thickness, 2.rest thickness #
-        if initial_lines[it] + 1 == initial_lines[it + 1]:
+        elif initial_lines[it] + 1 == initial_lines[it + 1]:
             cur_thickness += 1
         else:
             staff_lines_thicknesses.append(cur_thickness)
             cur_thickness = 1
 
         it += 1
-        
-    staff_lines_thicknesses.append(cur_thickness + 1)
     
-    # If all staff lines thickness are equal, then return one of them #
-    if all(thickness == staff_lines_thicknesses[0] for thickness in staff_lines_thicknesses):
-        return staff_lines_thicknesses[0], staff_lines
+    # Return the staff lines thicknesses and staff lines
     return staff_lines_thicknesses, staff_lines
 
 def remove_single_line(line_thickness, line_start, in_img, width):
