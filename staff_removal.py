@@ -32,10 +32,6 @@ def get_staff_lines(width, height, in_img, threshold):
         if row_histogram[row] >= (width * threshold):
             initial_lines.append(row)
 
-    # TODO: remove it after debugging
-    # print('inital_lines:', len(initial_lines))
-    # print('black pixels frequency between the first and last initial_line: ',
-    #       row_histogram[initial_lines[0]:initial_lines[len(initial_lines) - 1]])
 
     # it: iterator over all doubtful lines #
     it = 0
@@ -64,7 +60,6 @@ def get_staff_lines(width, height, in_img, threshold):
     # Return the staff lines thicknesses and staff lines
     return staff_lines_thicknesses, staff_lines
 
-
 def remove_single_line(line_thickness, line_start, in_img, width):
     # line_end: end pixel of the current staff line #
     line_end = line_start + line_thickness - 1
@@ -78,21 +73,22 @@ def remove_single_line(line_thickness, line_start, in_img, width):
 
             # If current staff can be extended up, then extend #
             elif in_img.item(line_start - 1, col) == 255 and in_img.item(line_end + 1, col) == 0:
-                thick = line_thickness + 1
-                if thick < 1:
-                    thick = 1
-                for j in range(int(thick)):
-                    in_img.itemset((line_start + j, col), 255)
+                if (col > 0 and in_img.item(line_end + 1, col - 1) != 0) and (col < width - 1 and in_img.item(line_end + 1, col + 1) != 0):
+                    thick = line_thickness + 1
+                    if thick < 1:
+                        thick = 1
+                    for j in range(int(thick)):
+                        in_img.itemset((line_start + j, col), 255)
 
             # If current staff can be extended down, then extend #
             elif in_img.item(line_start - 1, col) == 0 and in_img.item(line_end + 1, col) == 255:
-                thick = line_thickness + 1
-                if thick < 1:
-                    thick = 1
-                for j in range(int(thick)):
-                    in_img.itemset((line_end - j, col), 255)
+                if (col > 0 and in_img.item(line_start - 1, col - 1) != 0) and (col < width - 1 and in_img.item(line_start - 1, col + 1) != 0):
+                    thick = line_thickness + 1
+                    if thick < 1:
+                        thick = 1
+                    for j in range(int(thick)):
+                        in_img.itemset((line_end - j, col), 255)
     return in_img
-
 
 def remove_staff_lines(in_img, width, staff_lines, staff_lines_thicknesses):
     it = 0
@@ -105,35 +101,6 @@ def remove_staff_lines(in_img, width, staff_lines, staff_lines_thicknesses):
 
         it += 1
     return in_img
-
-
-def segmentation(gray):
-    original_image = gray.copy()
-    blurred = cv2.GaussianBlur(gray, (3, 3), 0)
-    thresh = cv2.threshold(blurred, 160, 255, cv2.THRESH_BINARY_INV)[1]
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-    dilate = cv2.dilate(thresh, kernel, iterations=4)
-
-    # Find contours in the image
-    cnts = cv2.findContours(dilate.copy(), cv2.RETR_TREE,
-                            cv2.CHAIN_APPROX_SIMPLE)
-    cnts = cnts[0] if len(cnts) == 2 else cnts[1]
-
-    contours = []
-
-    threshold_min_area = 0
-    threshold_max_area = 3000
-
-    for c in cnts:
-        x, y, w, h = cv2.boundingRect(c)
-        area = cv2.contourArea(c)
-        if area > threshold_min_area and area < threshold_max_area:
-            original_image = cv2.rectangle(
-                original_image, (x, y), (x+w, y+h), (0, 255, 0), 1)
-            contours.append(c)
-
-    print('contours detected: {}'.format(len(contours)))
-
 
 def fix_rotation(img):
     skew_img = cv2.bitwise_not(img)  # Invert image
@@ -165,3 +132,66 @@ def fix_rotation(img):
                              flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
 
     return angle, rotated
+
+def cut_image_into_buckets(in_img, staff_lines):
+    # List of cutted buckets images and positions of cutting #
+    cutted_images = []
+    cutting_position = []
+    
+    it = 0
+    lst_slice = 0
+    no_of_buckets = len(staff_lines) // 5
+    while it < no_of_buckets - 1:
+        _str = staff_lines[it * 5 + 4]
+        _end = staff_lines[it * 5 + 5]
+        
+        mid_row = (_end + _str) // 2
+        cutting_position.append(lst_slice)
+        cutted_images.append(in_img[lst_slice : mid_row, :])
+        
+        it+=1
+        lst_slice = mid_row
+        
+    cutting_position.append(lst_slice)
+    cutted_images.append(in_img[lst_slice : in_img.shape[0], :])
+    return cutting_position, cutted_images
+
+def get_ref_lines(cut_positions, staff_lines):
+    ref_lines = []
+    no_of_buckets = len(staff_lines) // 5
+    
+    for it in range(no_of_buckets):
+        fourth_staff_line = staff_lines[it * 5 + 3]
+        ref_lines.append(fourth_staff_line - cut_positions[it])
+    
+    return ref_lines
+
+def segmentation(in_img):
+    n, m = in_img.shape
+    
+    blurred = cv2.GaussianBlur(in_img, (3, 3), 0)
+    thresh = cv2.threshold(blurred, 160, 255, cv2.THRESH_BINARY_INV)[1]
+    
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
+    dilate = cv2.dilate(thresh, kernel, iterations=1)
+
+    cv2.imwrite('dilated.png', dilate)
+    # Find contours in the image
+    cnts = cv2.findContours(dilate.copy(), cv2.RETR_EXTERNAL,
+                            cv2.CHAIN_APPROX_SIMPLE)
+    cnts = cnts[0] if len(cnts) == 2 else cnts[1]
+
+    contours = []
+
+    threshold_min_area = 0
+    threshold_max_area = n * m
+
+    symbols = []
+    for c in cnts:
+        x, y, w, h = cv2.boundingRect(c)
+        area = cv2.contourArea(c)
+        if area > threshold_min_area and area < threshold_max_area:
+            symbols.append([x, y, x + w, y + h])
+            contours.append(c)
+
+    return symbols
