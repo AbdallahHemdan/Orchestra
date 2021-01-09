@@ -37,7 +37,7 @@ def extract_features(img, feature_set='hog'):
 
 def get_directories():
     directories = []
-    directories_filenames = os.listdir('./Ours')
+    directories_filenames = os.listdir('./data-set')
     
     for i, fn in enumerate(directories_filenames):
         directories.append(fn)
@@ -50,7 +50,7 @@ def load_dataset(feature_set='hog'):
     directories = get_directories()
     
     for dir_name in directories:
-        path_to_dataset = './Ours/' + dir_name
+        path_to_dataset = './data-set/' + dir_name
         img_filenames = os.listdir(path_to_dataset)
         
         for i, fn in enumerate(img_filenames):
@@ -65,16 +65,17 @@ def load_dataset(feature_set='hog'):
         
     return features, labels
 
-def run_experiment(feature_set):    
-    for model_name, model in classifiers.items():
-        print('############## Training', model_name, "##############")
-        # Train the model only on the training features
-        model.fit(train_features, train_labels)
-        
-        # Test the model on images it hasn't seen before
-        accuracy = model.score(test_features, test_labels)
-        
-        print(model_name, 'accuracy:', accuracy*100, '%')
+def run_experiment(train_features, test_features, train_labels, test_labels, model_name):    
+    model = classifiers[model_name]
+    print('############## Training', model_name, "##############")
+    # Train the model only on the training features
+    model.fit(train_features, train_labels)
+    
+    # Test the model on images it hasn't seen before
+    accuracy = model.score(test_features, test_labels)
+    
+    print(model_name, 'accuracy:', accuracy*100, '%')
+    return model
 
 
 random_seed = 42  
@@ -85,5 +86,5 @@ np.random.seed(random_seed)
 classifiers = {
     'SVM': svm.LinearSVC(random_state=random_seed),
     'KNN': KNeighborsClassifier(n_neighbors=7),
-    'NN': MLPClassifier(solver='sgd', random_state=random_seed, hidden_layer_sizes=(500,), max_iter=20, verbose=1)
+    'NN': MLPClassifier(solver='sgd', random_state=random_seed, hidden_layer_sizes=(500,), max_iter=100, verbose=1)
 }
