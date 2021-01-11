@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 
+# List of maps and needed variables #
 direct_labels = ['x', 'b', 'clef', 'dot', 'hash', 'd', 't_2', 't_4', 'symbol_bb', 'barline']
 direct_texts = {'x':'##', 'b':'&', 'hash':'#', 'd':'', 'symbol_bb':'&&', 'dot':'.', 'clef':'', 't_2':'2', 't_4':'4', 'barline':''}
 
@@ -30,10 +31,7 @@ def clean_and_cut(img):
     img = 255 - img
     return img
 
-
 def get_a_character(distance, line_spacing, flipped = 0):
-    # TODO: change it to chars array manipluation 
-
     if flipped and distance < 4.25 * line_spacing:
         return 'b1'
     if distance < flipped * (4.5 * line_spacing) + .25 * line_spacing:
@@ -50,7 +48,7 @@ def get_a_character(distance, line_spacing, flipped = 0):
         return 'a' + (1 - flipped) * '1' + (flipped) * '2'
     if distance < flipped * (4.5 * line_spacing) + 3.25 * line_spacing:
         return 'b2'
-    return 'Adel_3abet'
+    return 'b1'
 
 def get_nxt(chord_type, char):
     pos = chords_order.find(char)
@@ -81,21 +79,14 @@ def get_a_chord(chord_type, distance, line_spacing, flipped = 0):
         return get_nxt(chord_type, 'a')
     if distance < 3.25 * line_spacing:
         return get_nxt(chord_type, 'b')
-    return 'Hemdan_3abet'
+    return get_nxt(chord_type, 'b')
 
 def text_operation(label, ref_line, line_spacing, y1, y2): 
     if label in direct_labels:
-        if direct_texts[label] == None:
-            print("LOL - 1")
-
         return direct_texts[label]
     
     if label.startswith('chord_'):
         distance = ref_line - y2
-
-        if get_a_chord(label, distance, line_spacing) == None:
-            print("LOL - 2")
-
         return get_a_chord(label, distance, line_spacing)
             
     if not(label.endswith('flipped')): 
@@ -104,18 +95,12 @@ def text_operation(label, ref_line, line_spacing, y1, y2):
             distance = ref_line - y2
             character = get_a_character(distance, line_spacing)
 
-            if f'{character}{direct_a[label]}' == None:
-                print("LOL - 3")
-
             return f'{character}{direct_a[label]}'
     else: # flipped
         distance = 0
         if label.startswith('a_'):
             distance = ref_line - y1
             character = get_a_character(distance, line_spacing, 1)
-
-            if character + direct_a[label] == None:
-                print("LOL - 4")
 
             return character + direct_a[label]
 
@@ -141,3 +126,17 @@ def cut_boundaries(cur_symbol, no_of_cuts, y2):
         cutted_boundaries.append(ret_boundary)
 
     return cutted_boundaries
+
+def preprocess_img(img_path):
+    # 1. Read desired image #
+    img = cv2.imread(img_path, 0)
+    
+    # 2. Remove noise (odd pixels) from the image and save it #
+    img = cv2.fastNlMeansDenoising(img, None, 10, 7, 21)
+
+    # 3. Binarize image using combination of (global + otsu) thresholding and save it #
+    threshold, img = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+
+    # 4. Return image shape (width, height) and processed image # 
+    n, m = img.shape
+    return n, m, img

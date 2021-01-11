@@ -10,6 +10,8 @@ import skimage.io as io
 import random
 from skimage.transform import rotate
 from sklearn.model_selection import train_test_split
+import pickle
+import matplotlib.pyplot as plt
 
 
 ########## Variables ##########
