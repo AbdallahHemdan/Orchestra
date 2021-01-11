@@ -7,9 +7,8 @@ from skimage import feature
 from skimage import measure
 import matplotlib.pyplot as plt
 from collections import Counter
-from skimage.filters import threshold_otsu
 
-
+# Methods of Staff line removal and segmentation #
 def get_staff_lines(width, height, in_img, threshold):
     # initial_lines: list of all initial lines that maybe extended #
     initial_lines = []
@@ -59,7 +58,6 @@ def get_staff_lines(width, height, in_img, threshold):
     # Return the staff lines thicknesses and staff lines
     return staff_lines_thicknesses, staff_lines
 
-
 def remove_single_line(line_thickness, line_start, in_img, width):
     # line_end: end pixel of the current staff line #
     line_end = line_start + line_thickness - 1
@@ -90,7 +88,6 @@ def remove_single_line(line_thickness, line_start, in_img, width):
                         in_img.itemset((line_end - j, col), 255)
     return in_img
 
-
 def remove_staff_lines(in_img, width, staff_lines, staff_lines_thicknesses):
     it = 0
 
@@ -102,39 +99,6 @@ def remove_staff_lines(in_img, width, staff_lines, staff_lines_thicknesses):
 
         it += 1
     return in_img
-
-
-def fix_rotation(img):
-    skew_img = cv2.bitwise_not(img)  # Invert image
-
-    # grab the (x, y) coordinates of all pixel values that
-    # are greater than zero, then use these coordinates to
-    # compute a rotated bounding box that contains all
-    # coordinates
-    coords = np.column_stack(np.where(skew_img > 0))
-    angle = cv2.minAreaRect(coords)[-1]
-
-    # the `cv2.minAreaRect` function returns values in the
-    # range [-90, 0); as the rectangle rotates clockwise the
-    # returned angle trends to 0 -- in this special case we
-    # need to add 90 degrees to the angle
-    if angle < -45:
-        angle = -(90 + angle)
-
-    # otherwise, just take the inverse of the angle to make
-    # it positive
-    else:
-        angle = -angle
-
-    # rotate the image to deskew it
-    (h, w) = img.shape[:2]
-    center = (w // 2, h // 2)
-    M = cv2.getRotationMatrix2D(center, angle, 1.0)
-    rotated = cv2.warpAffine(img, M, (w, h),
-                             flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
-
-    return angle, rotated
-
 
 def cut_image_into_buckets(in_img, staff_lines):
     # List of cutted buckets images and positions of cutting #
@@ -159,7 +123,6 @@ def cut_image_into_buckets(in_img, staff_lines):
     cutted_images.append(in_img[lst_slice: in_img.shape[0], :])
     return cutting_position, cutted_images
 
-
 def get_ref_lines(cut_positions, staff_lines):
     ref_lines = []
     no_of_buckets = len(staff_lines) // 5
@@ -173,7 +136,6 @@ def get_ref_lines(cut_positions, staff_lines):
         ref_lines.append(ref_line)
 
     return ref_lines, lines_spacing
-
 
 def segmentation(height_before, in_img):
     n, m = in_img.shape

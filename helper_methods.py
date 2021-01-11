@@ -1,7 +1,19 @@
-import numpy as np
 import cv2
+import random
+import numpy as np
+from sklearn import svm
 
 # List of maps and needed variables #
+
+########## Variables ##########
+random_seed = 42
+random.seed(random_seed)
+target_img_size = (32, 32)
+np.random.seed(random_seed)
+classifiers = {
+    'SVM': svm.LinearSVC(random_state=random_seed)
+}
+
 direct_labels = ['x', 'b', 'clef', 'dot', 'hash', 'd', 't_2', 't_4', 'symbol_bb', 'barline']
 direct_texts = {'x':'##', 'b':'&', 'hash':'#', 'd':'', 'symbol_bb':'&&', 'dot':'.', 'clef':'', 't_2':'2', 't_4':'4', 'barline':''}
 
@@ -140,3 +152,19 @@ def preprocess_img(img_path):
     # 4. Return image shape (width, height) and processed image # 
     n, m = img.shape
     return n, m, img
+
+def extract_hog_features(img):
+    img = cv2.resize(img, target_img_size)
+    win_size = (32, 32)
+    cell_size = (4, 4)
+    block_size_in_cells = (2, 2)
+
+    block_size = (block_size_in_cells[1] * cell_size[1],
+                  block_size_in_cells[0] * cell_size[0])
+    block_stride = (cell_size[1], cell_size[0])
+    nbins = 9
+    hog = cv2.HOGDescriptor(win_size, block_size,
+                            block_stride, cell_size, nbins)
+    h = hog.compute(img)
+    h = h.flatten()
+    return h.flatten()

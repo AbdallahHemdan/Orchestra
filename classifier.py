@@ -1,17 +1,9 @@
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.neural_network import MLPClassifier  # MLP is an NN
-from sklearn import svm, tree
-import numpy as np
-import argparse
-import imutils
 import cv2
 import os
-import skimage.io as io
 import random
-from skimage.transform import rotate
-from sklearn.model_selection import train_test_split
-import pickle
-import matplotlib.pyplot as plt
+import argparse
+import numpy as np
+from sklearn import svm
 
 
 ########## Variables ##########
@@ -22,31 +14,10 @@ target_img_size = (32, 32)
 np.random.seed(random_seed)
 
 classifiers = {
-    'SVM': svm.LinearSVC(random_state=random_seed),
-    'KNN': KNeighborsClassifier(n_neighbors=7),
-    'NN': MLPClassifier(solver='sgd', random_state=random_seed, hidden_layer_sizes=(500,), max_iter=200, verbose=1),
-    'TREE': tree.DecisionTreeClassifier(random_state=0, max_depth=10)
+    'SVM': svm.LinearSVC(random_state=random_seed)
 }
 
 ########## Methods ##########
-
-
-def extract_raw_pixels(img):
-    return cv2.resize(img, target_img_size).flatten()
-
-
-def extract_sift_features(img):
-    img = cv2.resize(img, target_img_size)
-
-    sift = cv2.SIFT_create()
-    _, features = sift.detectAndCompute(img, None)
-
-    try:
-        return features.flatten()
-    except:
-        io.imshow(img)
-        io.show()
-
 
 def extract_hog_features(img):
     img = cv2.resize(img, target_img_size)
@@ -64,15 +35,8 @@ def extract_hog_features(img):
     h = h.flatten()
     return h.flatten()
 
-
 def extract_features(img, feature_set='hog'):
-    if feature_set == 'hog':
-        return extract_hog_features(img)
-    elif feature_set == 'sift':
-        return extract_sift_features(img)
-    else:
-        return extract_raw_pixels(img)
-
+    return extract_hog_features(img)
 
 def get_directories():
     directories = []
@@ -82,7 +46,6 @@ def get_directories():
         directories.append(fn)
 
     return directories
-
 
 def load_dataset(feature_set='hog'):
     labels = []
@@ -104,7 +67,6 @@ def load_dataset(feature_set='hog'):
         print('finished processing: ', dir_name)
 
     return features, labels
-
 
 def run_experiment(train_features, test_features, train_labels, test_labels, model_name):
     model = classifiers[model_name]

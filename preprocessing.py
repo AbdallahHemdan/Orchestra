@@ -1,4 +1,5 @@
 import numpy as np
+import pickle
 from numpy.linalg import norm
 from skimage.filters import *
 from skimage.color import rgb2gray

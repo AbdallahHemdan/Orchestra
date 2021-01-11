@@ -1,4 +1,3 @@
-from classifier import *
 from preprocessing import *
 from staff_removal import *
 from helper_methods import *
@@ -6,9 +5,9 @@ from helper_methods import *
 import argparse
 import os
 import datetime
+
 # Initialize parser
 parser = argparse.ArgumentParser()
-
 parser.add_argument("inputfolder", help = "Input File")
 parser.add_argument("outputfolder", help = "Output File")
 
@@ -22,11 +21,9 @@ with open(f"{args.outputfolder}/Output.txt", "w") as text_file:
 
 # Threshold for line to be considered as an initial staff line #
 threshold = 0.8
-accidentals = ['x', 'hash', 'b', 'symbol_bb', 'd']
-
-
 filename = 'model/model.sav'
 model = pickle.load(open(filename, 'rb'))
+accidentals = ['x', 'hash', 'b', 'symbol_bb', 'd']
 
 def preprocessing(inputfolder, fn, f):
       # Get image and its dimensions #
@@ -46,13 +43,45 @@ def preprocessing(inputfolder, fn, f):
 
     return cutted, ref_lines, lines_spacing
 
+def get_target_boundaries(label, cur_symbol, y2):
+    if label == 'b_8':
+        cutted_boundaries = cut_boundaries(cur_symbol, 2, y2)
+        label = 'a_8'
+    elif label == 'b_8_flipped':
+        cutted_boundaries = cut_boundaries(cur_symbol, 2, y2)
+        label = 'a_8_flipped'
+    elif label == 'b_16':
+        cutted_boundaries = cut_boundaries(cur_symbol, 4, y2)
+        label = 'a_16'
+    elif label == 'b_16_flipped':
+        cutted_boundaries = cut_boundaries(cur_symbol, 4, y2)
+        label = 'a_16_flipped'
+    else: 
+        cutted_boundaries = cut_boundaries(cur_symbol, 1, y2)
+
+    return label, cutted_boundaries
+
+def get_label_cutted_boundaries(boundary, height_before, cutted):
+    # Get the current symbol #
+    x1, y1, x2, y2 = boundary
+    cur_symbol = cutted[y1-height_before:y2+1-height_before, x1:x2+1]
+
+    # Clean and cut #
+    cur_symbol = clean_and_cut(cur_symbol)
+    cur_symbol = 255 - cur_symbol
+
+    # Start prediction of the current symbol #
+    feature = extract_hog_features(cur_symbol)
+    label = str(model.predict([feature])[0])
+
+    return get_target_boundaries(label, cur_symbol, y2)
+
 def process_image(inputfolder, fn, f):
     cutted, ref_lines, lines_spacing = preprocessing(inputfolder, fn, f)
 
     last_acc = ''
     last_num = ''
     height_before = 0
-
 
     if len(cutted) > 1:
         f.write('{\n')
@@ -61,43 +90,16 @@ def process_image(inputfolder, fn, f):
     for it in range(len(cutted)):
         f.write('[')
         is_started = False
-        cur_img = cutted[it].copy()
         
-                
-        symbols_boundries = segmentation(height_before, cutted[it])
-        symbols_boundries.sort(key = lambda x: (x[0], x[1]))
-        
-        symbols = []
-        for boundry in symbols_boundries:
-            # Get the current symbol #
-            x1, y1, x2, y2 = boundry
-            cur_symbol = cutted[it][y1-height_before:y2+1-height_before, x1:x2+1]
-            
-            # Clean and cut #
-            cur_symbol = clean_and_cut(cur_symbol)
-            cur_symbol = 255 - cur_symbol
 
-            # Start prediction of the current symbol #
-            feature = extract_features(cur_symbol, 'hog')
-            label = str(model.predict([feature])[0])
-            
+        symbols_boundaries = segmentation(height_before, cutted[it])
+        symbols_boundaries.sort(key = lambda x: (x[0], x[1]))
+        
+        for boundary in symbols_boundaries:
+            label, cutted_boundaries = get_label_cutted_boundaries(boundary, height_before, cutted[it])
+
             if label == 'clef':
                 is_started = True
-
-            if label == 'b_8':
-                cutted_boundaries = cut_boundaries(cur_symbol, 2, y2)
-                label = 'a_8'
-            elif label == 'b_8_flipped':
-                cutted_boundaries = cut_boundaries(cur_symbol, 2, y2)
-                label = 'a_8_flipped'
-            elif label == 'b_16':
-                cutted_boundaries = cut_boundaries(cur_symbol, 4, y2)
-                label = 'a_16'
-            elif label == 'b_16_flipped':
-                cutted_boundaries = cut_boundaries(cur_symbol, 4, y2)
-                label = 'a_16_flipped'
-            else: 
-                cutted_boundaries = cut_boundaries(cur_symbol, 1, y2)
             
             for cutted_boundary in cutted_boundaries:
                 _, y1, _, y2 = cutted_boundary
@@ -126,29 +128,29 @@ def process_image(inputfolder, fn, f):
     if len(cutted) > 1:
         f.write('}')
 
-for i in [args.inputfolder]:
+def main():
     try: 
         os.mkdir(args.outputfolder) 
-    except OSError as error: 
+    except OSError as error:
         pass
-    
 
     list_of_images = os.listdir(args.inputfolder)
+    for _, fn in enumerate(list_of_images):
+        # Open the output text file #
+        file_prefix = fn.split('.')[0]
+        f = open(f"{args.outputfolder}/{file_prefix}.txt", "w")
 
-    for i, fn in enumerate(list_of_images):
-      # Open the output text file #
-      file_prefix = fn.split('.')[0]
-      f = open(f"{args.outputfolder}/{file_prefix}.txt", "w")
+        # Process each image separately #
+        try:
+            process_image(args.inputfolder, fn, f)
+        except Exception as e:
+            print(e)
+            print(f'{args.inputfolder}-{fn} has been failed !!')
+            pass
+        
+        f.close()  
+    print('Finished !!') 
 
 
-      # Process each image separately #
-      try:
-        process_image(args.inputfolder, fn, f)
-      except:
-        print(f'{args.inputfolder}-{fn} has been failed !!')
-        pass
-
-      f.close()  
-
-
-print('Finished !!') 
+if __name__ == "__main__":
+    main()
