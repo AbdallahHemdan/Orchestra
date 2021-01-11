@@ -22,7 +22,7 @@ np.random.seed(random_seed)
 classifiers = {
     'SVM': svm.LinearSVC(random_state=random_seed),
     'KNN': KNeighborsClassifier(n_neighbors=7),
-    'NN': MLPClassifier(solver='sgd', random_state=random_seed, hidden_layer_sizes=(500,), max_iter=100, verbose=1),
+    'NN': MLPClassifier(solver='sgd', random_state=random_seed, hidden_layer_sizes=(500,), max_iter=200, verbose=1),
     'TREE': tree.DecisionTreeClassifier(random_state=0, max_depth=10)
 }
 
