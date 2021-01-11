@@ -175,7 +175,7 @@ def get_ref_lines(cut_positions, staff_lines):
     return ref_lines, lines_spacing
 
 
-def segmentation(in_img):
+def segmentation(height_before, in_img):
     n, m = in_img.shape
 
     blurred = cv2.GaussianBlur(in_img, (3, 3), 0)
@@ -184,13 +184,11 @@ def segmentation(in_img):
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
     dilate = cv2.dilate(thresh, kernel, iterations=1)
 
-    cv2.imwrite('dilated.png', dilate)
     # Find contours in the image
     cnts = cv2.findContours(dilate.copy(), cv2.RETR_EXTERNAL,
                             cv2.CHAIN_APPROX_SIMPLE)
     cnts = cnts[0] if len(cnts) == 2 else cnts[1]
 
-    contours = []
 
     threshold_min_area = 0
     threshold_max_area = n * m
@@ -200,7 +198,6 @@ def segmentation(in_img):
         x, y, w, h = cv2.boundingRect(c)
         area = cv2.contourArea(c)
         if area > threshold_min_area and area < threshold_max_area:
-            symbols.append([x, y, x + w, y + h])
-            contours.append(c)
+            symbols.append([x, y + height_before, x + w, y + h + height_before])
 
     return symbols
