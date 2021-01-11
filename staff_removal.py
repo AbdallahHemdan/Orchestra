@@ -32,7 +32,6 @@ def get_staff_lines(width, height, in_img, threshold):
         if row_histogram[row] >= (width * threshold):
             initial_lines.append(row)
 
-
     # it: iterator over all doubtful lines #
     it = 0
 
@@ -59,6 +58,7 @@ def get_staff_lines(width, height, in_img, threshold):
 
     # Return the staff lines thicknesses and staff lines
     return staff_lines_thicknesses, staff_lines
+
 
 def remove_single_line(line_thickness, line_start, in_img, width):
     # line_end: end pixel of the current staff line #
@@ -90,6 +90,7 @@ def remove_single_line(line_thickness, line_start, in_img, width):
                         in_img.itemset((line_end - j, col), 255)
     return in_img
 
+
 def remove_staff_lines(in_img, width, staff_lines, staff_lines_thicknesses):
     it = 0
 
@@ -101,6 +102,7 @@ def remove_staff_lines(in_img, width, staff_lines, staff_lines_thicknesses):
 
         it += 1
     return in_img
+
 
 def fix_rotation(img):
     skew_img = cv2.bitwise_not(img)  # Invert image
@@ -133,45 +135,52 @@ def fix_rotation(img):
 
     return angle, rotated
 
+
 def cut_image_into_buckets(in_img, staff_lines):
     # List of cutted buckets images and positions of cutting #
     cutted_images = []
     cutting_position = []
-    
+
     it = 0
     lst_slice = 0
     no_of_buckets = len(staff_lines) // 5
     while it < no_of_buckets - 1:
         _str = staff_lines[it * 5 + 4]
         _end = staff_lines[it * 5 + 5]
-        
+
         mid_row = (_end + _str) // 2
         cutting_position.append(lst_slice)
-        cutted_images.append(in_img[lst_slice : mid_row, :])
-        
-        it+=1
+        cutted_images.append(in_img[lst_slice: mid_row, :])
+
+        it += 1
         lst_slice = mid_row
-        
+
     cutting_position.append(lst_slice)
-    cutted_images.append(in_img[lst_slice : in_img.shape[0], :])
+    cutted_images.append(in_img[lst_slice: in_img.shape[0], :])
     return cutting_position, cutted_images
+
 
 def get_ref_lines(cut_positions, staff_lines):
     ref_lines = []
     no_of_buckets = len(staff_lines) // 5
-    
+    lines_spacing = []
+
     for it in range(no_of_buckets):
-        fourth_staff_line = staff_lines[it * 5 + 3]
-        ref_lines.append(fourth_staff_line - cut_positions[it])
-    
-    return ref_lines
+        line_spacing = (staff_lines[it * 5 + 4] - staff_lines[it * 5]) / 4
+        lines_spacing.append(line_spacing)
+
+        ref_line = staff_lines[it * 5 + 4] + line_spacing * 1.5
+        ref_lines.append(ref_line)
+
+    return ref_lines, lines_spacing
+
 
 def segmentation(in_img):
     n, m = in_img.shape
-    
+
     blurred = cv2.GaussianBlur(in_img, (3, 3), 0)
     thresh = cv2.threshold(blurred, 160, 255, cv2.THRESH_BINARY_INV)[1]
-    
+
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
     dilate = cv2.dilate(thresh, kernel, iterations=1)
 
