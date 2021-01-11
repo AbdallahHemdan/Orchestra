@@ -22,7 +22,6 @@ with open(f"{args.outputfolder}/Output.txt", "w") as text_file:
 
 # Threshold for line to be considered as an initial staff line #
 threshold = 0.8
-correct_labels = np.load('correct_labels.npy')
 accidentals = ['x', 'hash', 'b', 'symbol_bb', 'd']
 
 
