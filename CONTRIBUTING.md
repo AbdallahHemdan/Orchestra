@@ -1,4 +1,4 @@
-## Instructions to contribute in Oud project
+## Instructions to contribute in Orchestra project
 
 1. Fork the Project
 2. Create your Feature Branch 
