@@ -107,6 +107,11 @@
 3. Cutted 3
 > [ \meter<"4/4"> e1/16 e1/16 e1/16 e1/16 e1/4 e#1/4 g1/4 g&&1/4 g1/4 e#2/4 ]
 
+## Contributing
+
+> Contributions are what make the open source community such an amazing place to be learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+
+Check out our [contributing guidelines](https://github.com/AbdallahHemdan/Orchestra/blob/master/CONTRIBUTING.md) for ways to contribute.
 
 ### Contributors
 <table>
@@ -119,4 +124,4 @@
  </table>
 
 ### Licence
-[MIT Licence](https://github.com/AbdallahHemdan/Sqrt_OS/blob/main/LICENSE)
+[MIT Licence](https://github.com/AbdallahHemdan/Orchestra/blob/master/LICENSE)
