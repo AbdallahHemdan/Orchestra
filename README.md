@@ -107,6 +107,30 @@
 3. Cutted 3
 > [ \meter<"4/4"> e1/16 e1/16 e1/16 e1/16 e1/4 e#1/4 g1/4 g&&1/4 g1/4 e#2/4 ]
 
+
+### Installation
+
+1. **_Clone the repository_**
+
+```sh
+$ git clone https://github.com/AbdallahHemdan/Orchestra.git
+```
+2. **_Navigate to repository directory_**
+```sh
+$ cd oudFrontend
+```
+
+
+### Running
+
+1. **_Put you input files inside input folder_*
+2. **_Put you output files inside output folder_*
+
+3. **_Running_*
+```sh
+python main.py $path_of_input_folder $path_of_output_folder
+```
+
 ## Contributing
 
 > Contributions are what make the open source community such an amazing place to be learn, inspire, and create. Any contributions you make are **greatly appreciated**.
