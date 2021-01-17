@@ -123,10 +123,10 @@ $ cd oudFrontend
 
 ### Running
 
-1. **_Put you input files inside input folder_*
-2. **_Put you output files inside output folder_*
+1. **_Put you input files inside input folder_**
+2. **_Put you output files inside output folder_**
 
-3. **_Running_*
+3. **_Running_**
 ```sh
 python main.py $path_of_input_folder $path_of_output_folder
 ```
