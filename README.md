@@ -117,7 +117,7 @@ $ git clone https://github.com/AbdallahHemdan/Orchestra.git
 ```
 2. **_Navigate to repository directory_**
 ```sh
-$ cd oudFrontend
+$ cd Orchestra
 ```
 
 
