@@ -1,1 +1,0 @@
-Input Folder: ./inputOutput Folder: ./outputDate: 2021-01-12 00:56:23.465829
