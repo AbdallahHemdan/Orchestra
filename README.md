@@ -119,7 +119,10 @@ $ git clone https://github.com/AbdallahHemdan/Orchestra.git
 ```sh
 $ cd Orchestra
 ```
-
+3. **_Install dependencies_**
+```sh
+$ pip install -r requirements.txt
+```
 
 ### Running
 
